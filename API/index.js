@@ -112,8 +112,9 @@ app.post('/api/checkUser', async function (req, res) {
             SELECT CASE 
                 WHEN EXISTS(SELECT 1 FROM users WHERE username = :username) THEN deleted_flag 
                 ELSE null
-            END AS Bob
-            FROM users;
+            END
+            FROM users
+            WHERE username = :username AND uid = (SELECT MAX(uid) FROM users WHERE username = :username);
         `, {
             username: user
         });
@@ -133,12 +134,13 @@ app.post('/api/checkUser', async function (req, res) {
         
 
     } catch(err) {
-        console.error(err);res.json({
+        console.error(err);
+        res.json({
             message: 'error during user check',
             result: null
         });
     }
-})
+});
 
 app.post('/api/register', async function (req, res) {
     try {
@@ -278,6 +280,61 @@ app.post('/api/updateScore', async function (req, res, next) {
     } catch (err) {
       console.log(err);
       res.json({ err });
+    }
+});
+
+app.get('/api/checkJWT', async function (req, res) {
+    try {
+        const user = req.user;
+        const check = await req.db.query(`
+            SELECT CASE 
+                WHEN EXISTS(SELECT 1 FROM users WHERE uid = :uid) THEN deleted_flag 
+                ELSE null
+            END
+            FROM users
+            WHERE uid = :uid;
+        `, {
+            uid: user.userId
+        });
+        if (check[0][0].Bob === null) {
+            res.json({
+                result: false
+            });
+        } else if (check[0][0].Bob === 0) {
+            res.json({
+                result: true
+            });
+        } else {
+            res.json({
+                result: false
+            });
+        }
+        
+
+    } catch(err) {
+        console.error(err);
+        res.json({
+            message: 'error during user check',
+            result: null
+        });
+    }
+});
+
+app.get('/api/getStats', async function (req, res, next) {
+    try {
+        const user = req.user
+        const stats = await req.db.query(`
+            SELECT questions, correct FROM users WHERE uid = :uid;
+        `, {
+            uid: user.userId
+        });
+        res.json({
+            user: user.username,
+            questions: stats[0][0].questions,
+            correct: stats[0][0].correct
+        });
+    } catch (err) {
+       console.error(err) 
     }
 });
 
