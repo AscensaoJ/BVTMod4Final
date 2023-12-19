@@ -6,10 +6,8 @@ export default function Loading(props) {
 
     useEffect(() => {
         if(props.loading === false) {
-            console.log('bib');
             return navigate('/quiz');
         }
-        console.log(props.loading);
     }, [props.loading])
 
     return (
