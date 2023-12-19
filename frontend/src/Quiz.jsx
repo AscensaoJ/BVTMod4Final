@@ -27,7 +27,6 @@ export default function Quiz(props){
             setQueNum(0);
             setQue(convertHTML(props.quiz[queNum].question));
             answerSetup(props.quiz[queNum].incorrect_answers.slice());
-            props.setFinal(false);
     }, [props.isLoaded])
 
     function checkAnswer(value) {
@@ -42,7 +41,6 @@ export default function Quiz(props){
     // Handles end of quiz
     function finish() {
         props.updater(correct, props.quiz.length);
-        props.setFinal(true);
         return navigate('/final');
     }
 
@@ -81,7 +79,6 @@ export default function Quiz(props){
 
     return (
         <>
-            {!props.isLoaded && <Loading />}
             {props.isLoaded && !queNext && <Question question={que} answers={answers} checkAnswer={checkAnswer} />}
             {props.isLoaded && queNext && <Next nextQue={writeQuestion} question={que} answer={answers[corAns]} correct={gotCor} queNum={queNum} finish={finish} quiz={props.quiz}/>}
         </>
