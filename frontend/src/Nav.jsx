@@ -8,12 +8,8 @@ export default function Nav(props) {
     // Handles local logout
     function logoutBtn () {
         if (logout()) {
-            props.setUserData({
-                username: 'Guest',
-                loggedIn: false,
-                correct: 0,
-                total: 0
-            });
+            props.setLogin(false)
+            navigate('/')
         }
     }
 
