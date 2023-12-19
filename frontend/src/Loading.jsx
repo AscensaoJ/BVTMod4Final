@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 export default function Loading(props) {
     const navigate = useNavigate();
 
+    // Workaround to have loading screen
     useEffect(() => {
         if(props.loading === false) {
             return navigate('/quiz');
