@@ -43,26 +43,6 @@ export default function QueSetup(props) {
                     <button onClick={e => start(e.target.value)} value="16">16</button>
                 </span>
             </div>
-            {/* <div className='col'>
-                <button onClick={e => start(e.target.value)} value="5">5</button>
-                <button onClick={e => start(e.target.value)} value="9">9</button>
-                <button onClick={e => start(e.target.value)} value="13">13</button>
-            </div>
-            <div className='col'>
-                <button onClick={e => start(e.target.value)} value="6">6</button>
-                <button onClick={e => start(e.target.value)} value="10">10</button>
-                <button onClick={e => start(e.target.value)} value="14">14</button>
-            </div>
-            <div className='col'>
-                <button onClick={e => start(e.target.value)} value="7">7</button>
-                <button onClick={e => start(e.target.value)} value="11">11</button>
-                <button onClick={e => start(e.target.value)} value="15">15</button>
-            </div>
-            <div className='col'>
-                <button onClick={e => start(e.target.value)} value="8">8</button>
-                <button onClick={e => start(e.target.value)} value="12">12</button>
-                <button onClick={e => start(e.target.value)} value="16">16</button>
-            </div> */}
         </div>
     )
 }
