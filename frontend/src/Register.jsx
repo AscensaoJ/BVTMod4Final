@@ -18,14 +18,9 @@ export default function Register(props) {
         }
         if(user != ""){
             let res = await checkUser(user);
-            if (res === true){
-                const bob = await register(user, pass);
-                props.setUserData({
-                    username: bob.username,
-                    loggedIn: true,
-                    total: bob.questions,
-                    correct: bob.correct
-                });
+            if (res === false){
+                await register(user, pass);
+                props.setLogin(true);
                 setPass('');
                 return navigate('/');
             } else {
@@ -93,7 +88,6 @@ export default function Register(props) {
                 {match && <button id='sub' className='btn'>Register</button>}
                 {!match && <p id='passMatch'>Passwords do not match!</p>}
             </form>
-            {/* <button onClick={() => tester('Jack', 'passwort', 'register')}>tester</button> */}
         </>
     )
 }
