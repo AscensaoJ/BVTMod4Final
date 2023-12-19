@@ -1,0 +1,1 @@
+This project was created as my final project for module 4 of Bay Valley Tech's Code Academy. The frontend was created using React, the quizzes are provided by the OpenTDB api, the middleware was created using Express, and the backend was created using MySQL running on Workbench.
