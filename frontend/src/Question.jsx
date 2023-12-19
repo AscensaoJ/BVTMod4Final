@@ -1,17 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
 export default function Question(props){
-    /* const [load, setLoad] = useState(0); // This annoying thing is required for proper function.
-    useEffect(() => {
-        setLoad(1);
-    }, [])
-
-    useEffect(() => {
-        console.log(props.answers[0]);
-        console.log(props.answers[1]);
-        console.log(props.answers[2]);
-        console.log(props.answers[3]);
-    }, [load]) */
 
     return (
         <div id='container'>
