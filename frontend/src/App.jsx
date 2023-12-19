@@ -8,38 +8,51 @@ import Quiz from './Quiz.jsx';
 import FinalScore from './FinalScore.jsx';
 import Register from './Register.jsx';
 import About from './About.jsx';
+import Profile from './Profile.jsx';
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
-import { loadStats, updateUser } from './api/apiAuth.jsx';
+import { checkJWT, loadStats, updateUser } from './api/apiAuth.jsx';
 
 function App() {
-  const [page, setPage] = useState(0);
-  const [setup, setSetup] = useState(0);
+  const [login, setLogin] = useState(false);
   const [ques, setQues] = useState([]); // Holds raw quiz
   //const [token, setToken] = useState('');
   const [category, setCategory] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [final, setFinal] = useState(false);
   const [score, setScore] = useState([]);
   const [queNum, setQueNum] = useState(0);
-  const [userData, setUserData] = useState({
-    username: 'Guest',
-    loggedIn: false,
-    correct: 0,
-    total: 0
-  });
 
   useEffect(() => {
-    if(localStorage.getItem('quizappjwt') != undefined){
-      loadStats();
-    }
+    setStats();
     //getToken();
   }, []);
+
+  // Fetches stored user's data on site load
+  async function setStats() {
+    if(localStorage.getItem('quizappjwt') != null){
+      let res = await checkJWT();
+        if (res === true){
+          await loadStats();
+          setLogin(true);
+        } else {
+          localStorage.removeItem('quizappjwt')
+          alert('Username not found!');
+        }
+    } else {
+      sessionStorage.setItem('quizapptotal', 0);
+      sessionStorage.setItem('quizappcorrect', 0);
+      sessionStorage.setItem('quizappuser', 'Guest');
+    }
+  }
 
   useEffect(() => {
     if(queNum >= 1) {
       getQuiz();
     }
-  }, [queNum]);
+  }, [queNum])
+
+  // useEffect(() => {
+  //   console.log(token);
+  // }, [token])
 
   // Fetch quiz from OpenTDB
   function getQuiz() {
@@ -48,30 +61,17 @@ function App() {
       .then((res) => res.json())
       .then(((data) => setQues(data.results)))
       .then(() => setLoading(false));
-    console.log(str);
-  }
-
-  function handler(value, source) {
-    if(source == 'final') {
-      setFinal(value);
-    }
   }
 
   // Updates local user data. If logged in, updates database user data
   function updateUserData(correct, total) {
-
     setScore([correct, total]);
-    const tot = userData.total + total;
-    const cor = userData.correct +correct;
-    setUserData(oldData => {
-      return {
-        ...oldData,
-        correct: (oldData.correct + correct),
-        total: (oldData.total + total)
-      }
-    });
-    if(userData.loggedIn) {
-      updateUser(userData.username, tot, cor)
+    const tot = Number(sessionStorage.getItem('quizapptotal')) + total;
+    const cor = Number(sessionStorage.getItem('quizappcorrect')) + correct;
+    sessionStorage.setItem('quizapptotal', tot);
+    sessionStorage.setItem('quizappcorrect', cor);
+    if(login) {
+      updateUser(sessionStorage.getItem('quizappuser'), tot, cor)
     }
   }
 
@@ -86,16 +86,17 @@ function App() {
   return (
     <>
       <Router>
-        <Nav page={page} userData={userData} setUserData={setUserData}/>
+        <Nav login={login} setLogin={setLogin}/>
         <Routes>
-          <Route index element={<Categories setLoading={setLoading} setCat={setCategory} resetNum={setQueNum} />} />
-          <Route path='/que' element={<QueSetup setQueNum={setQueNum}/>} />
-          <Route path='/login' element={<Login setUserData={setUserData} />} />
-          <Route path='/login/register' element={<Register />} />
+          <Route index element={<Categories setCat={setCategory} setLoading={setLoading} resetNum={setQueNum} />} />
+          <Route path='/que' element={<QueSetup setNum={setQueNum} />} />
+          <Route path='/login' element={<Login setLogin={setLogin} />} />
+          <Route path='/login/register' element={<Register setLogin={setLogin} />} />
           <Route path='/quiz/loading' element={<Loading loading={loading} />} />
-          <Route path='/quiz' element={<Quiz quiz={ques} isLoaded={!loading} setFinal={setFinal} updater={updateUserData} />} />
+          <Route path='/quiz' element={<Quiz quiz={ques} isLoaded={!loading} updater={updateUserData} />} />
           <Route path='/final' element={<FinalScore score={score} />} />
           <Route path='/about' element={<About />} />
+          <Route path='/profile' element={<Profile setLogin={setLogin} />} />
         </Routes>
       </Router>
       <Outlet />
