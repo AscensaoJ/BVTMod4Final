@@ -17,13 +17,8 @@ export default function Login(props) {
         if(user != ""){
             let res = await checkUser(user);
             if (res === true){
-                const bob = await login(user, pass);
-                props.setUserData({
-                    username: bob.username,
-                    loggedIn: true,
-                    total: bob.questions,
-                    correct: bob.correct
-                });
+                await login(user, pass);
+                props.setLogin(true);
                 setPass('');
                 return navigate('/');
             } else {
@@ -75,7 +70,6 @@ export default function Login(props) {
                 <button className='btn'>Login</button>
                 <Link to='/login/register' className='btn' id='reggie'>Register</Link>
             </form>
-            {/* <button onClick={() => tester('Jack', 'passwort')}>tester</button> */}
         </>
     )
 }
