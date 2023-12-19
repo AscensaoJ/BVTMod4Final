@@ -30,7 +30,7 @@ const pool = mysql.createPool({
 
 app.use(cors(corsOptions));
 
-// Read both JSON and binary request bodies
+// Read JSON request bodies
 app.use(bodyParser.json());
 
 app.use(async (req, res, next) => {
@@ -56,14 +56,21 @@ app.get('/api', (req, res) => {
     });
 });
 
-app.post('/api/login', async function (req, res) {
+app.app.post('/api/login', async function (req, res) {
     try {
+        console.log('ONE')
         const { user, hay } = req.body;
         let pass = await decryptPass(hay);
 
-        const [[users]] = await req.db.query(`SELECT * FROM users WHERE username = :user`, {  user });
-    
-        if (!users) res.json('Email not found');
+        const [[users]] = await req.db.query(`
+            SELECT * FROM users
+            WHERE 
+                username = :username AND
+                uid = (SELECT MAX(uid) FROM users WHERE username = :username);
+        `, {
+            username: user
+        });
+        if (!users) res.json('User not found');
         const dbPassword = `${users.userpass}`
         const compare = await bcrypt.compare(pass, dbPassword);
     
@@ -86,7 +93,7 @@ app.post('/api/login', async function (req, res) {
         }
         
       } catch (err) {
-        console.log('Error in /login', err)
+        console.error('Error in /login', err)
       }
 });
 
@@ -112,12 +119,13 @@ app.post('/api/checkUser', async function (req, res) {
             SELECT CASE 
                 WHEN EXISTS(SELECT 1 FROM users WHERE username = :username) THEN deleted_flag 
                 ELSE null
-            END
+            END AS Bob
             FROM users
             WHERE username = :username AND uid = (SELECT MAX(uid) FROM users WHERE username = :username);
         `, {
             username: user
         });
+        console.log(check)
         if (check[0][0].Bob === null) {
             res.json({
                 result: false
@@ -127,6 +135,7 @@ app.post('/api/checkUser', async function (req, res) {
                 result: true
             });
         } else {
+            console.log('boo')
             res.json({
                 result: false
             });
@@ -165,8 +174,6 @@ app.post('/api/register', async function (req, res) {
                 password: hash
               });
       
-              console.log('USER', user)
-      
               encUser = jwt.sign(
                 { 
                   userId: user.insertId,
@@ -174,8 +181,6 @@ app.post('/api/register', async function (req, res) {
                 },
                 process.env.JWT_KEY
               );
-      
-              console.log('ENCODED USER', encUser);
             } catch (error) {
               console.log('error', error);
             }
@@ -193,36 +198,6 @@ app.post('/api/register', async function (req, res) {
     }
 });
 
-async function genKeys() {
-    keyPair = await subtle.generateKey(
-        {
-            name: "RSA-OAEP",
-            modulusLength: 4096,
-            publicExponent: new Uint8Array([1, 0, 1]),
-            hash: "SHA-512",
-        },
-        true,
-        ["encrypt", "decrypt"],
-    );
-    const exported = await subtle.exportKey('jwk', keyPair.publicKey)
-    return exported;
-};
-
-async function decryptPass(pass) {
-
-    let bub = decode(pass);
-    let bob = ab2str(await subtle.decrypt({name: "RSA-OAEP"}, keyPair.privateKey, bub));
-    return bob;
-
-}
-
-function ab2str(ab) {
-    let bin = null;
-    let bob = new DataView(ab);
-    let bib = new TextDecoder();
-    bin = bib.decode(bob.buffer);
-    return bin;
-}
 
 // Jwt verification checks to see if there is an authorization header with a valid jwt in it.
 app.use(async function verifyJwt(req, res, next) {
@@ -260,7 +235,7 @@ app.use(async function verifyJwt(req, res, next) {
     await next();
 });
     
-app.post('/api/updateScore', async function (req, res, next) {
+app.put('/api/updateScore', async function (req, res, next) {
     try {
         const bib = req.body;
         console.log('user', req.user);
@@ -278,7 +253,7 @@ app.post('/api/updateScore', async function (req, res, next) {
                 uid: req.user.userId
         });
     } catch (err) {
-      console.log(err);
+      console.error(err);
       res.json({ err });
     }
 });
@@ -290,7 +265,7 @@ app.get('/api/checkJWT', async function (req, res) {
             SELECT CASE 
                 WHEN EXISTS(SELECT 1 FROM users WHERE uid = :uid) THEN deleted_flag 
                 ELSE null
-            END
+            END AS Bob
             FROM users
             WHERE uid = :uid;
         `, {
@@ -334,9 +309,60 @@ app.get('/api/getStats', async function (req, res, next) {
             correct: stats[0][0].correct
         });
     } catch (err) {
-       console.error(err) 
+       console.error(err);
+       res.json({ err });
     }
 });
+
+app.delete('/api/deleteUser', async function (req, res, next) {
+    try {
+        const uid = req.user.userId;
+        const deleted = req.db.query(`
+            UPDATE users
+            SET deleted_flag = 1
+            WHERE uid = :uid;
+        `, {
+            uid: uid
+        });
+        res.json({
+            message: 'done'
+        });
+    } catch (err) {
+        console.error(err);
+        res.json({ err });
+    }
+});
+
+async function genKeys() {
+    keyPair = await subtle.generateKey(
+        {
+            name: "RSA-OAEP",
+            modulusLength: 4096,
+            publicExponent: new Uint8Array([1, 0, 1]),
+            hash: "SHA-512",
+        },
+        true,
+        ["encrypt", "decrypt"],
+    );
+    const exported = await subtle.exportKey('jwk', keyPair.publicKey)
+    return exported;
+};
+
+async function decryptPass(pass) {
+    let bub = decode(pass);
+    let bob = ab2str(await subtle.decrypt({name: "RSA-OAEP"}, keyPair.privateKey, bub));
+    return bob;
+
+}
+
+// Turn arraybuffer to string
+function ab2str(ab) {
+    let bin = null;
+    let bob = new DataView(ab);
+    let bib = new TextDecoder();
+    bin = bib.decode(bob.buffer);
+    return bin;
+}
 
 app.listen(port, (req, res) => {
     console.log(`server started on http://localhost:${port} @ ${time}`);
